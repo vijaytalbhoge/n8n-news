@@ -1,0 +1,332 @@
+{
+  "name": "News Feed Final",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        16
+      ],
+      "id": "fc96e4d1-328b-4beb-ab43-f49eb18b7f3a",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 2048
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        192,
+        272
+      ],
+      "id": "5bbf3e7b-967b-49c5-813c-20bd1b329276",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "asKOSRVcdYRhlRil",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "58244292-dc55-4c0e-a493-576373b9b29a",
+              "name": "Category",
+              "value": "Geopolitics",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -464,
+        16
+      ],
+      "id": "b44f2fc2-262d-45f2-968f-916ce3bdef42",
+      "name": "News Category"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ecf8ab4b-fc63-4a86-8eda-b54905681fb5",
+              "name": "=title",
+              "value": "={{ $json.results[0].title }}",
+              "type": "string"
+            },
+            {
+              "id": "34e1ea2e-5b11-478a-88eb-414577e5d7f0",
+              "name": "Description",
+              "value": "={{ $json.results[0].description }}",
+              "type": "string"
+            },
+            {
+              "id": "aa9de3bf-911e-455e-9d82-c0b84fce9629",
+              "name": "url",
+              "value": "={{ $json.results[0].link }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        16
+      ],
+      "id": "b9626cb9-8c58-4bc6-8bcc-1fa92f50949f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=News Title:\n{{$json.title}}\n\nArticle URL:\n{{ $json.url }}\n\nTask:\nRead the article from the URL and generate 5 short news articles tailored for different professions.\n\nOutput Format:\n\nAgriculture & Allied Activities:\n<60 word optimistic article slightly relevant to agriculture>\n\nRetail Trade & Small Business:\n<60 word optimistic article slightly relevant to retail and small businesses>\n\nManufacturing:\n<60 word optimistic article slightly relevant to manufacturing>\n\nEducation:\n<60 word optimistic article slightly relevant to teachers and educators>\n\nConstruction:\n<60 word optimistic article slightly relevant to construction sector>",
+        "options": {
+          "systemMessage": "=Role:\nYou are a professional journalist and news analyst.\n\nGoal:\nConvert the provided news article into short professional news briefs tailored for different professions.\n\nInstructions:\n1. Read the article from the provided URL and understand the key facts.\n2. Identify the main event, why it matters, and its broader implications.\n3. Write a short journalistic news brief for each profession.\n4. Each brief must start with a clear headline.\n5. After the headline, write a short news paragraph explaining the event and its impact on that profession.\n6. Maintain a factual, professional newsroom tone similar to major news outlets.\n7. Do not simply summarize — frame the news from the perspective of how it affects the profession.\n8. Keep the core facts consistent across all articles.\n9. Avoid speculation and do not invent facts.\n\nProfessions to target:\n1. Agriculture & Allied Activities\n2. Retail Trade & Small Business\n3. Manufacturing\n4. Education (Teachers, tutors, trainers)\n5. Construction\n\nWriting Style:\n- Journalistic tone\n- Headline + short news brief\n- Approximately 60–70 words per article\n- Professional, informative, and slightly optimistic\n- Focus on real-world impact for the profession\n\nStructure for each article:\n\n<Profession Name>\n\nHeadline: <Short news-style headline>\n\nArticle:\n<60–70 word professional news brief explaining the event and why it matters for this profession>\n\nOutput Rules:\n- Produce exactly 5 articles\n- Follow the structure exactly\n- Do not add explanations\n- Do not include meta commentary"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        192,
+        16
+      ],
+      "id": "6e24cdad-19f1-4995-98ea-4e6e8b2b3381",
+      "name": "News AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.output;\n\nfunction extract(section) {\n  const regex = new RegExp(\"\\\\*\\\\*\" + section + \"\\\\*\\\\*[\\\\s\\\\S]*?(?=\\\\n\\\\*\\\\*|$)\", \"i\");\n  const match = text.match(regex);\n  return match ? match[0].replace(\"**\" + section + \"**\", \"\").trim() : \"\";\n}\n\nreturn [\n  {\n    Agriculture_and_Allied_Activities: extract(\"Agriculture & Allied Activities\"),\n    Small_Business: extract(\"Retail Trade & Small Business\"),\n    Manufacturing: extract(\"Manufacturing\"),\n    Education: extract(\"Education\"),\n    Construction: extract(\"Construction\")\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        16
+      ],
+      "id": "9b03a09b-c11a-48a8-9d12-7afb76155c7d",
+      "name": "Seperator"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "nMteTF8DKw3xs9CY",
+          "mode": "list",
+          "cachedResultName": "News Data",
+          "cachedResultUrl": "/projects/uYmuPXSa2HDsBtmF/datatables/nMteTF8DKw3xs9CY"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Agriculture_and_Allied_Activities": "={{ $json.Agriculture_and_Allied_Activities }}",
+            "Small_Business": "={{ $json.Small_Business }}",
+            "Manufacturing": "={{ $json.Manufacturing }}",
+            "Education": "={{ $json.Education }}",
+            "Construction": "={{ $json.Construction }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Agriculture_and_Allied_Activities",
+              "displayName": "Agriculture_and_Allied_Activities",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Small_Business",
+              "displayName": "Small_Business",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Manufacturing",
+              "displayName": "Manufacturing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Education",
+              "displayName": "Education",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Construction",
+              "displayName": "Construction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        16
+      ],
+      "id": "7759a61d-c234-41d7-8310-a8331a10cf75",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "url": "https://newsdata.io/api/1/news?apikey=pub_f017a2e3478143d392d9f71be0361a4f&q=geopolitics&language=en&size=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-news-bot"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -256,
+        16
+      ],
+      "id": "bead89a7-9205-4ce9-bd1e-c11d3fe222d7",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "News Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "News AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "News AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "News AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Seperator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "News Category": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seperator": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b416e9b9-25ce-4739-bd75-436d73c65276",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bb6df44102237cfb75a24cd92ae0d3830106829bf3b917f0a93ffaeaf2b1c5c1"
+  },
+  "id": "Q3GHjYHfrfSXKrAc",
+  "tags": []
+}
