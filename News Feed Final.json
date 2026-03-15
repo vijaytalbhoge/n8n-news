@@ -21,7 +21,7 @@
     {
       "parameters": {
         "options": {
-          "maxOutputTokens": 2048
+          "maxOutputTokens": 4000
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
